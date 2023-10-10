@@ -85,7 +85,7 @@ def borf(args):
     # 4. TODO: what to do if too few proteins (e.g. 2) are found in a cluster?
 
     for locus in transcriptome.gene_it():
-        locus_name = locus.get_gid() if args.use_geneid else locus.seqid+locus.strand+str(locus.start)+"-"+str(locus.end)
+        locus_name = locus.get_gid()
         
         strand = locus.strand
         coding_transcripts = [tx for tx in locus.object_it() if tx.has_cds()]
