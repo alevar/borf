@@ -1,6 +1,7 @@
 from intervaltree import Interval, IntervalTree
 from typing import Iterator, List, Callable
 import random
+import copy
 import sys
 import os
 
@@ -430,9 +431,10 @@ class Transcriptome (TXGroup):
             if gene.is_empty() or gene.get_gid() == obj.get_gid():
                 gene.add_object(obj)
             else:
-                yield gene
+                res_gene = copy.deepcopy(gene)
                 gene = Gene()
                 gene.add_object(obj)
+                yield res_gene
 
         if not gene.is_empty():
             yield gene
@@ -447,9 +449,11 @@ class Transcriptome (TXGroup):
             if bundle.is_empty() or bundle.overlaps(obj):
                 bundle.add_object(obj)
             else:
-                yield bundle
+                res_bundle = copy.deepcopy(bundle)
                 bundle = OverlapBundle()
                 bundle.add_object(obj)
+                yield res_bundle
+                
 
         if not bundle.is_empty():
             yield bundle

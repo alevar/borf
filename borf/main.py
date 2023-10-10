@@ -70,16 +70,13 @@ def compare_chains(chain1, chain2, strand):
 
 def borf(args):
 
-    out_fname = args.output.rstrip(".gtf").rstrip(".GTF").rstrip(".gff").rstrip(".GFF")
-    out_fp = open(out_fname,"w+") # clustered version of the annotation file
+    out_fp = open(args.output,"w+") # clustered version of the annotation file
     out_fp.write("locus\tall_transcripts\trepresentative\n")
 
     transcriptome = Transcriptome()
     transcriptome.build_from_file(args.gtf)
-    if args.use_geneid:
-        transcriptome.gid_sort()
-    else:
-        transcriptome.coordinate_sort()
+    
+    transcriptome.gid_sort()
 
     # logic:
     # 1. extract fasta sequences and find those that are complete ORFs
@@ -87,11 +84,11 @@ def borf(args):
     # 3. select representative ORF for each group this time making sure only complete ORFs are considered
     # 4. TODO: what to do if too few proteins (e.g. 2) are found in a cluster?
 
-    for locus in transcriptome.gene_it() if args.use_geneid else transcriptome.bundle_it():
+    for locus in transcriptome.gene_it():
         locus_name = locus.get_gid() if args.use_geneid else locus.seqid+locus.strand+str(locus.start)+"-"+str(locus.end)
         
         strand = locus.strand
-        coding_transcripts = [x for x in locus.object_it() if x.has_cds()]
+        coding_transcripts = [tx for tx in locus.object_it() if tx.has_cds()]
         if len(coding_transcripts) == 0:
             continue
         elif len(coding_transcripts) == 1:
