@@ -116,7 +116,7 @@ def borf(args):
             # compute median of medians
             moms = np.median(np.sort(dist_mat, axis=1), axis=1)
             # get index of the best element
-            rep_idx = np.argmin(moms)
+            rep_idx = np.argmax(moms)
 
             all_txs = ",".join([x.get_tid() for x in coding_transcripts])
 
