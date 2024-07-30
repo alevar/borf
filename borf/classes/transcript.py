@@ -335,7 +335,7 @@ class Object:
         self.seqid = lcs[0]
         self.strand = lcs[6]
 
-        if lcs[2] == "transcript":
+        if lcs[2] == "transcript" or lcs[2] == "mRNA":
             self.obj_type = Types.Transcript
             self.attrs = rename_attributes(self.attrs,{"ID":"transcript_id","Parent":"gene_id"})
         elif lcs[2] == "exon":
@@ -1042,7 +1042,7 @@ class CDS(Exon):
             str: The CDS object represented in GTF format without new line at the end.
 
         """
-        res = self.seqid+"\t"+\
+        res  =  self.seqid+"\t"+\
                 self.source+"\t"+\
                 Types.type2str(self.obj_type) +"\t"+\
                 str(self.start)+"\t"+\
@@ -1094,7 +1094,7 @@ class GTFObjectFactory:
         """
         obj = Object()
         obj.add_line(line)
-        if obj.get_type() == Types.Transcript:
+        if obj.get_type() == Types.Transcript or obj.get_type() == Types.MRNA:
             return obj.to_transcript()
         elif obj.get_type() == Types.Exon:
             return obj.to_exon()

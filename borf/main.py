@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 from typing import Iterator
 import numpy as np
+import subprocess
 import argparse
 import copy
 import sys
@@ -70,11 +73,20 @@ def compare_chains(chain1, chain2, strand):
 
 def borf(args):
 
-    out_fp = open(args.output,"w+") # clustered version of the annotation file
+    out_base = args.output.rsplit("/",1)[0]+"/"+args.output.rsplit("/",1)[1].rsplit(".",1)[0]
+
+    out_fp = open(out_base+".tsv","w+") # clustered version of the annotation file
     out_fp.write("locus\tall_transcripts\trepresentative\n")
 
+    out_gtf_fp = open(out_base+".gtf","w+")
+    out_gtf_fp.write("##gff-version 3\n")
+
+    # run gffread to standardize
+    cmd = ["gffread", "-T", "-o", out_base+".gffread.gtf", args.gtf]
+    subprocess.run(cmd)
+
     transcriptome = Transcriptome()
-    transcriptome.build_from_file(args.gtf)
+    transcriptome.build_from_file(out_base+".gffread.gtf")
     
     transcriptome.gid_sort()
 
@@ -112,6 +124,12 @@ def borf(args):
             # find the best representative transcript
             # compute median of medians
             moms = np.median(np.sort(dist_mat, axis=1), axis=1)
+            if args.score:
+                for i in range(len(moms)):
+                    coding_transcripts[i].add_attribute("mom",str(moms[i]))
+                    out_gtf_fp.write(coding_transcripts[i].to_gtf()+"\n")
+                continue
+            
             # get index of the best element
             rep_idx = np.argmax(moms)
 
@@ -119,7 +137,11 @@ def borf(args):
 
             out_fp.write(locus_name+"\t"+all_txs+"\t"+coding_transcripts[rep_idx].get_tid()+"\n")
 
+            # output gtf as well
+            out_gtf_fp.write(coding_transcripts[rep_idx].to_gtf()+"\n")
 
+
+    out_gtf_fp.close()
     out_fp.close()
 
 def main(args):
@@ -133,12 +155,16 @@ def main(args):
                         "--output",
                         required=True,
                         type=str,
-                        help="Output base file name. Anythign after the last dot will be ignored.")
+                        help="Output base file name. Anything after the last dot will be ignored.")
     parser.add_argument("--use_geneid",
                         action="store_true",
                         required=False,
                         help="If selected will use gene_id attribute to group transcripts. \
                             Without this flag transcripts are combined based on overlap instead.")
+    parser.add_argument("--score",
+                        action="store_true",
+                        required=False,
+                        help="If selected will simply score all transcripts with MedianOfMedians based on the ILPI distance matrix.")
     
     parser.set_defaults(func=borf)
     args = parser.parse_args()
